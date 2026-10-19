@@ -1,0 +1,25 @@
+name: Check Python syntax
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app.py"
+      - "scripts/**"
+      - "*.bat"
+      - ".github/workflows/check-python.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile application and catalog updater
+        run: python -m py_compile app.py scripts/update_autoplius_catalog.py
