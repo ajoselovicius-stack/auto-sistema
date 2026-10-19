@@ -6,22 +6,46 @@ from pathlib import Path
 import streamlit as st
 
 
-@st.cache_data(ttl=3600)
-def gauti_autoplius_markes():
+def _gauti_autoplius_xml(url):
+    """Bando oficialų Autoplius katalogo endpointą su abiem svetainės domenais."""
     import urllib.request
     import urllib.error
 
-    url = "https://autoplius.lt/importhandler?datacollector=1&category_id=2"
-    uzklausa = urllib.request.Request(
-        url,
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
+    urls = [url]
+    if url.startswith("https://autoplius.lt/"):
+        urls.append(url.replace("https://autoplius.lt/", "https://en.autoplius.lt/", 1))
 
-    try:
-        with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
-            medis = ET.fromstring(atsakymas.read())
-    except (urllib.error.URLError, ET.ParseError, TimeoutError) as klaida:
-        print(f"Nepavyko gauti Autoplius markių: {klaida}")
+    paskutine_klaida = None
+    for bandymo_url in urls:
+        uzklausa = urllib.request.Request(
+            bandymo_url,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/131.0.0.0 Safari/537.36"
+                ),
+                "Accept": "application/xml,text/xml,text/html,*/*",
+                "Accept-Language": "lt-LT,lt;q=0.9,en-US;q=0.8,en;q=0.7",
+                "Referer": "https://autoplius.lt/",
+                "Connection": "close",
+            },
+        )
+        try:
+            with urllib.request.urlopen(uzklausa, timeout=25) as atsakymas:
+                return ET.fromstring(atsakymas.read())
+        except (urllib.error.URLError, ET.ParseError, TimeoutError, OSError) as klaida:
+            paskutine_klaida = klaida
+
+    print(f"Nepavyko pasiekti Autoplius katalogo ({url}): {paskutine_klaida}")
+    return None
+
+
+@st.cache_data(ttl=3600)
+def gauti_autoplius_markes():
+    url = "https://autoplius.lt/importhandler?datacollector=1&category_id=2"
+    medis = _gauti_autoplius_xml(url)
+    if medis is None:
         return []
 
     skyrius = medis.find("./response/make_id")
@@ -44,23 +68,12 @@ def gauti_autoplius_markes():
 
 @st.cache_data(ttl=3600)
 def gauti_autoplius_modelius(markes_id):
-    import urllib.request
-    import urllib.error
-
     url = (
         "https://autoplius.lt/importhandler"
         f"?datacollector=1&category_id=2&make_id={markes_id}"
     )
-    uzklausa = urllib.request.Request(
-        url,
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
-
-    try:
-        with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
-            medis = ET.fromstring(atsakymas.read())
-    except (urllib.error.URLError, ET.ParseError, TimeoutError) as klaida:
-        print(f"Nepavyko gauti Autoplius modelių: {klaida}")
+    medis = _gauti_autoplius_xml(url)
+    if medis is None:
         return []
 
     skyrius = medis.find("./response/models")
