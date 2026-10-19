@@ -1,0 +1,9 @@
+
+automobiliai.db
+automobiliai_atsargine_*.db
+nuotraukos/
+__pycache__/
+.streamlit/secrets.toml
+*.pyc
+app_atsargine_*.py
+app_pries_*.py
