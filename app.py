@@ -5,8 +5,11 @@ from pathlib import Path
 
 import streamlit as st
 @st.cache_data(ttl=3600)
+
+@st.cache_data(ttl=3600)
 def gauti_autoplius_markes():
     import urllib.request
+    import urllib.error
 
     url = "https://autoplius.lt/importhandler?datacollector=1&category_id=2"
     uzklausa = urllib.request.Request(
@@ -14,23 +17,27 @@ def gauti_autoplius_markes():
         headers={"User-Agent": "Mozilla/5.0"}
     )
 
-    with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
-        medis = ET.fromstring(atsakymas.read())
+    try:
+        with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
+            medis = ET.fromstring(atsakymas.read())
+    except (urllib.error.URLError, ET.ParseError, TimeoutError) as klaida:
+        print(f"Nepavyko gauti Autoplius markių: {klaida}")
+        return []
 
     skyrius = medis.find("./response/make_id")
     if skyrius is None:
         return []
 
     rezultatai = []
-
     for elementas in skyrius.findall("item"):
         id_elementas = elementas.find("id")
         pavadinimas = elementas.findtext("title")
 
-        if id_elementas is not None and pavadinimas:
-            rezultatai.append(
-                (pavadinimas.strip(), int(id_elementas.text))
-            )
+        if id_elementas is not None and id_elementas.text and pavadinimas:
+            try:
+                rezultatai.append((pavadinimas.strip(), int(id_elementas.text)))
+            except ValueError:
+                continue
 
     return sorted(rezultatai, key=lambda x: x[0].lower())
 
@@ -38,37 +45,41 @@ def gauti_autoplius_markes():
 @st.cache_data(ttl=3600)
 def gauti_autoplius_modelius(markes_id):
     import urllib.request
+    import urllib.error
 
     url = (
         "https://autoplius.lt/importhandler"
         f"?datacollector=1&category_id=2&make_id={markes_id}"
     )
-
     uzklausa = urllib.request.Request(
         url,
         headers={"User-Agent": "Mozilla/5.0"}
     )
 
-    with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
-        medis = ET.fromstring(atsakymas.read())
+    try:
+        with urllib.request.urlopen(uzklausa, timeout=20) as atsakymas:
+            medis = ET.fromstring(atsakymas.read())
+    except (urllib.error.URLError, ET.ParseError, TimeoutError) as klaida:
+        print(f"Nepavyko gauti Autoplius modelių: {klaida}")
+        return []
 
     skyrius = medis.find("./response/models")
     if skyrius is None:
         return []
 
     rezultatai = []
-
     for elementas in skyrius.findall("item"):
         id_elementas = elementas.find("id")
         pavadinimas = elementas.findtext("title")
 
-        if id_elementas is not None and pavadinimas:
-            rezultatai.append(
-                (pavadinimas.strip(), int(id_elementas.text))
-            )
+        if id_elementas is not None and id_elementas.text and pavadinimas:
+            try:
+                rezultatai.append((pavadinimas.strip(), int(id_elementas.text)))
+            except ValueError:
+                continue
 
     return sorted(rezultatai, key=lambda x: x[0].lower())
-DB_PATH = Path(__file__).with_name("automobiliai.db")
+
 PHOTO_DIR = Path(__file__).with_name("nuotraukos")
 PHOTO_DIR.mkdir(exist_ok=True)
 
