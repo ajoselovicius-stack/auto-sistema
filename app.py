@@ -710,29 +710,31 @@ if filtruoti:
                 ) if vairo_id in vairo_atvirksciai else 0
             )
             naujas_vairo_id = vairai[vairo_pasirinkimas]
-            if not nauja_marke.strip() or not naujas_modelis.strip():
-                st.error("Markė ir modelis privalomi.")
-            else:
-                with prisijungti() as conn:
-                    conn.execute("""
-                        UPDATE automobiliai SET
-                            marke=?, modelis=?, metai=?, rida=?, kaina=?, vin=?, aprasymas=?,
-                            autoplius_make_id=?, autoplius_model_id=?, variklio_turis=?,
-                            kebulo_tipas_id=?, galia=?, kuro_tipas_id=?, pavaru_deze_id=?,
-                            duru_skaicius_id=?, spalva_id=?, miestas_id=?, pazeidimu_id=?,
-                            vairo_puse_id=?
-                        WHERE id=?
-                    """, (
-                        nauja_marke.strip(), naujas_modelis.strip(), int(nauji_metai),
-                        int(nauja_rida), float(nauja_kaina), naujas_vin.strip(),
-                        naujas_aprasymas.strip(), int(naujas_make_id), int(naujas_model_id),
-                        int(naujas_variklio_turis), int(naujas_kebulo_id), int(nauja_galia),
-                        int(naujas_kuro_id), int(nauja_deze_id), int(naujos_durys_id),
-                        int(nauja_spalva_id), int(naujas_miestas_id),
-                        int(naujas_pazeidimu_id), int(naujas_vairo_id), auto_id
-                    ))
-                st.success("Pakeitimai išsaugoti!")
-                st.rerun()
+            issaugoti_pakeitimus = st.form_submit_button("Išsaugoti pakeitimus")
+            if issaugoti_pakeitimus:
+                if not nauja_marke.strip() or not naujas_modelis.strip():
+                    st.error("Markė ir modelis privalomi.")
+                else:
+                    with prisijungti() as conn:
+                        conn.execute("""
+                            UPDATE automobiliai SET
+                                marke=?, modelis=?, metai=?, rida=?, kaina=?, vin=?, aprasymas=?,
+                                autoplius_make_id=?, autoplius_model_id=?, variklio_turis=?,
+                                kebulo_tipas_id=?, galia=?, kuro_tipas_id=?, pavaru_deze_id=?,
+                                duru_skaicius_id=?, spalva_id=?, miestas_id=?, pazeidimu_id=?,
+                                vairo_puse_id=?
+                            WHERE id=?
+                        """, (
+                            nauja_marke.strip(), naujas_modelis.strip(), int(nauji_metai),
+                            int(nauja_rida), float(nauja_kaina), naujas_vin.strip(),
+                            naujas_aprasymas.strip(), int(naujas_make_id), int(naujas_model_id),
+                            int(naujas_variklio_turis), int(naujas_kebulo_id), int(nauja_galia),
+                            int(naujas_kuro_id), int(nauja_deze_id), int(naujos_durys_id),
+                            int(nauja_spalva_id), int(naujas_miestas_id),
+                            int(naujas_pazeidimu_id), int(naujas_vairo_id), auto_id
+                        ))
+                    st.success("Pakeitimai išsaugoti!")
+                    st.rerun()
 else:
     st.info("Automobilių nerasta. Gali pridėti automobilį aukščiau.")
 
