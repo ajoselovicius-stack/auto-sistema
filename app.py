@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import streamlit as st
-@st.cache_data(ttl=3600)
+
 
 @st.cache_data(ttl=3600)
 def gauti_autoplius_markes():
@@ -232,44 +232,44 @@ st.divider()
 with st.expander("➕ Pridėti automobilį"):
 
     markiu_sarasas = gauti_autoplius_markes()
-    markes = {pavadinimas: markes_id for pavadinimas, markes_id in markiu_sarasas}
+    autoplius_make_id = None
+    autoplius_model_id = None
 
-    if not markiu_sarasas:
-        st.error("Nepavyko užkrauti Autoplius markių katalogo.")
-        st.stop()
+    if markiu_sarasas:
+        markes = {pavadinimas: markes_id for pavadinimas, markes_id in markiu_sarasas}
+        pradine_marke = next(
+            (pavadinimas for pavadinimas, markes_id in markiu_sarasas if markes_id == 97),
+            markiu_sarasas[0][0]
+        )
+        marke = st.selectbox(
+            "Markė *",
+            list(markes.keys()),
+            index=list(markes.keys()).index(pradine_marke),
+            key="prideti_marke"
+        )
+        autoplius_make_id = markes[marke]
 
-    pradine_marke = next(
-        (pavadinimas for pavadinimas, markes_id in markiu_sarasas if markes_id == 97),
-        markiu_sarasas[0][0]
-    )
-
-    marke = st.selectbox(
-        "Markė *",
-        list(markes.keys()),
-        index=list(markes.keys()).index(pradine_marke),
-        key="prideti_marke"
-    )
-    autoplius_make_id = markes[marke]
-
-    modeliu_sarasas = gauti_autoplius_modelius(autoplius_make_id)
-
-    if not modeliu_sarasas:
-        st.error("Nepavyko užkrauti pasirinktos markės modelių.")
-        st.stop()
-
-    modeliai = {pavadinimas: modelio_id for pavadinimas, modelio_id in modeliu_sarasas}
-    pradinis_modelis = next(
-        (pavadinimas for pavadinimas, modelio_id in modeliu_sarasas if modelio_id == 10941),
-        modeliu_sarasas[0][0]
-    )
-
-    modelis = st.selectbox(
-        "Modelis *",
-        list(modeliai.keys()),
-        index=list(modeliai.keys()).index(pradinis_modelis),
-        key=f"prideti_modelis_{autoplius_make_id}"
-    )
-    autoplius_model_id = modeliai[modelis]
+        modeliu_sarasas = gauti_autoplius_modelius(autoplius_make_id)
+        if modeliu_sarasas:
+            modeliai = {pavadinimas: modelio_id for pavadinimas, modelio_id in modeliu_sarasas}
+            pradinis_modelis = next(
+                (pavadinimas for pavadinimas, modelio_id in modeliu_sarasas if modelio_id == 10941),
+                modeliu_sarasas[0][0]
+            )
+            modelis = st.selectbox(
+                "Modelis *",
+                list(modeliai.keys()),
+                index=list(modeliai.keys()).index(pradinis_modelis),
+                key=f"prideti_modelis_{autoplius_make_id}"
+            )
+            autoplius_model_id = modeliai[modelis]
+        else:
+            st.warning("Šios markės modelių katalogo gauti nepavyko. Modelį įrašyk rankiniu būdu.")
+            modelis = st.text_input("Modelis *", key="prideti_modelis_manual")
+    else:
+        st.warning("Autoplius katalogas nepasiekiamas. Markę ir modelį gali įrašyti rankiniu būdu.")
+        marke = st.text_input("Markė *", key="prideti_marke_manual")
+        modelis = st.text_input("Modelis *", key="prideti_modelis_manual")
 
     with st.form("prideti"):
         col1, col2 = st.columns(2)
@@ -374,7 +374,8 @@ with st.expander("➕ Pridėti automobilį"):
                     """, (
                         marke.strip(), modelis.strip(), int(metai), int(rida),
                         float(kaina), vin.strip(), aprasymas.strip(),
-                        int(autoplius_make_id), int(autoplius_model_id),
+                        int(autoplius_make_id) if autoplius_make_id is not None else None,
+                        int(autoplius_model_id) if autoplius_model_id is not None else None,
                         int(variklio_turis), int(kebulo_tipas_id), int(galia),
                         int(kuro_tipas_id), int(pavaru_deze_id),
                         int(duru_skaicius_id), int(spalva_id), int(miestas_id),
@@ -495,8 +496,8 @@ if filtruoti:
 
         markiu_sarasas = gauti_autoplius_markes()
 
-if not markiu_sarasas:
-    st.warning("Autoplius katalogas laikinai nepasiekiamas. Pabandyk vėliau.")
+        if not markiu_sarasas:
+            st.warning("Autoplius katalogas laikinai nepasiekiamas. Esama markė palikta.")
             markiu_sarasas = [(auto[1], esama(0, 97))]
 
         markes = {pavadinimas: markes_id for pavadinimas, markes_id in markiu_sarasas}
