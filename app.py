@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import uuid
 import xml.etree.ElementTree as ET
@@ -41,8 +42,28 @@ def _gauti_autoplius_xml(url):
     return None
 
 
+def _skaityti_autoplius_katalogo_kopija():
+    """Nuskaito GitHub Actions atnaujinamą katalogo kopiją, jei ji jau sukurta."""
+    kelias = Path(__file__).with_name("autoplius_catalog.json")
+    try:
+        with kelias.open("r", encoding="utf-8") as failas:
+            duomenys = json.load(failas)
+        if isinstance(duomenys.get("makes"), list):
+            return duomenys["makes"]
+    except (OSError, json.JSONDecodeError, AttributeError):
+        pass
+    return []
+
+
 @st.cache_data(ttl=3600)
 def gauti_autoplius_markes():
+    kopija = _skaityti_autoplius_katalogo_kopija()
+    if kopija:
+        return sorted(
+            [(str(mark["name"]), int(mark["id"])) for mark in kopija if mark.get("name") and mark.get("id") is not None],
+            key=lambda item: item[0].casefold()
+        )
+
     url = "https://autoplius.lt/importhandler?datacollector=1&category_id=2"
     medis = _gauti_autoplius_xml(url)
     if medis is None:
@@ -68,6 +89,16 @@ def gauti_autoplius_markes():
 
 @st.cache_data(ttl=3600)
 def gauti_autoplius_modelius(markes_id):
+    kopija = _skaityti_autoplius_katalogo_kopija()
+    if kopija:
+        for mark in kopija:
+            if str(mark.get("id")) == str(markes_id):
+                return sorted(
+                    [(str(model["name"]), int(model["id"])) for model in mark.get("models", []) if model.get("name") and model.get("id") is not None],
+                    key=lambda item: item[0].casefold()
+                )
+        return []
+
     url = (
         "https://autoplius.lt/importhandler"
         f"?datacollector=1&category_id=2&make_id={markes_id}"
