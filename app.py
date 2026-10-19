@@ -495,8 +495,8 @@ if filtruoti:
 
         markiu_sarasas = gauti_autoplius_markes()
 
-        if not markiu_sarasas:
-            st.error("Nepavyko gauti markių iš Autoplius. Patikrink interneto ryšį.")
+if not markiu_sarasas:
+    st.warning("Autoplius katalogas laikinai nepasiekiamas. Pabandyk vėliau.")
             markiu_sarasas = [(auto[1], esama(0, 97))]
 
         markes = {pavadinimas: markes_id for pavadinimas, markes_id in markiu_sarasas}
