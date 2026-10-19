@@ -79,7 +79,8 @@ def gauti_autoplius_modelius(markes_id):
                 continue
 
     return sorted(rezultatai, key=lambda x: x[0].lower())
-
+    
+DB_PATH = Path(__file__).with_name("automobiliai.db")
 PHOTO_DIR = Path(__file__).with_name("nuotraukos")
 PHOTO_DIR.mkdir(exist_ok=True)
 
